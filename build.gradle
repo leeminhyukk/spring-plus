@@ -24,6 +24,9 @@ repositories {
 }
 
 dependencies {
+    // security 추가
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     // querydsl 추가
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"

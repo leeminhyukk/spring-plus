@@ -5,7 +5,7 @@
 
 Environment : Intellij , Git/Github
 
-Development : JAVASCRIPT
+Development : JavaScript
 
 설명 : 처음부터 코드를 하나씩 작성하는게 아닌 미완성의 코드를 수정하는게 핵심
 

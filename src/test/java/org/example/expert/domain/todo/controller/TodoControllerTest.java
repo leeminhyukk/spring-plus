@@ -1,5 +1,10 @@
 package org.example.expert.domain.todo.controller;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.example.expert.config.JwtSecurityFilter;
+import org.example.expert.config.SecurityConfig;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
@@ -11,19 +16,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.test.web.servlet.MockMvc;
-
+import org.springframework.security.test.context.support.WithMockUser;
 import java.time.LocalDateTime;
-
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TodoController.class)
-@Secured(UserRole.Authority.ADMIN) // /test 는 ADMIN 만 허용
 class TodoControllerTest {
 
     @Autowired
@@ -31,6 +37,9 @@ class TodoControllerTest {
 
     @MockBean
     private TodoService todoService;
+
+    @MockBean
+    private JwtSecurityFilter jwtSecurityFilter;
 
     @Test
     void todo_단건_조회에_성공한다() throws Exception {
@@ -61,9 +70,22 @@ class TodoControllerTest {
     }
 
     @Test
+    @Secured(UserRole.Authority.ADMIN) // /test 는 ADMIN 만 허용
+    @WithMockUser(roles = "ADMIN")
     void todo_단건_조회_시_todo가_존재하지_않아_예외가_발생한다() throws Exception {
         // given
         long todoId = 1L;
+
+        // JWT 필터에서 요청을 처리하지 않도록 mock 처리
+        doAnswer(invocation -> {
+            HttpServletRequest request = invocation.getArgument(0);
+            HttpServletResponse response = invocation.getArgument(1);
+            FilterChain chain = invocation.getArgument(2);
+
+            // 필터 우회하여 다음 필터 체인으로 넘어가도록 설정
+            chain.doFilter(request, response);
+            return null;
+        }).when(jwtSecurityFilter).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class), any(FilterChain.class));
 
         // when
         when(todoService.getTodo(todoId))
